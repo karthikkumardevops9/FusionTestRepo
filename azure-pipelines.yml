@@ -57,7 +57,7 @@ stages:
         WebAppName: 'webapp-apitest-cc-fusionapi-001'
         packageForLinux: '$(Build.ArtifactStagingDirectory)/*/.zip'
         enableCustomDeployment: true
-        DeploymentType: zipDeploy
+        DeploymentType: 'zipDeploy'
         #deploymentMethod: 'zipDeploy'
         
     - task: PublishBuildArtifacts@1    
