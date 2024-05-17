@@ -59,6 +59,8 @@ stages:
         enableCustomDeployment: true
         DeploymentType: zipDeploy
         #deploymentMethod: 'zipDeploy'
+        
+    - task: PublishBuildArtifacts@1    
 
 
 
