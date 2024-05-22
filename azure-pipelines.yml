@@ -31,9 +31,10 @@ stages:
     
     - powershell:  |
         $publishDirectory = '(Build.ArtifactStagingDirectory)'
-        $ziFilePath = '(Build.ArtifactStagingDirectory)\published.zip'
+        Write-Host "Contents of publish directory ($publishDirectory):"
+        Get-ChildItem -Path $publishDirectory -Recurse
 
-        Write-Host "Publish Directory: $publishDirectory"
+        $ziFilePath = '(Build.ArtifactStagingDirectory)\published.zip'
         Write-Host "Zip File Path: $zipFilePath"
 
         if (!(Test-Path -Path $publishDirectory)) {
