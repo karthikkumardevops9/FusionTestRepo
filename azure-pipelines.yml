@@ -76,7 +76,7 @@ stages:
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
         WebAppName: 'webapp-apitest-cc-fusionapi-001'
-        packageForLinux: '$(Pipeline.Workspace)/drop/**/*.zip'
+        packageForLinux: '$(Pipeline.Workspace)/drop/*'
         enableCustomDeployment: true
         DeploymentType: 'zipDeploy'
         #deploymentMethod: 'zipDeploy'
