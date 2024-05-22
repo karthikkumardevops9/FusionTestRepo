@@ -29,26 +29,8 @@ stages:
     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
       displayName: 'Publish Application'
     
-    - powershell:  |
-        $publishDirectory = '(Build.ArtifactStagingDirectory)'
-        Write-Host "Contents of publish directory ($publishDirectory):"
-        Get-ChildItem -Path $publishDirectory -Recurse
-
-        $ziFilePath = '(Build.ArtifactStagingDirectory)\published.zip'
-        Write-Host "Zip File Path: $zipFilePath"
-
-        if (!(Test-Path -Path $publishDirectory)) {
-            Write-Error "Publish directory does not exist: $publishDirectory"
-            exit 1
-        }
-        Add-Type -AssemblyName System.IO.Compression.FileSystem 
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($publishDirectory, $zipFilePath)
-
-        if (!(Test-Path -Path $zipFilePath)) {
-            Write-Error "Zip file was not created : $zipFilePath"
-            exit 1
-        }
-      displayName: 'Create Zip from Published Output'  
+   
+     
 
     # - task: DotNetCoreCLI@2
     #   displayName: 'Publish Artifact'
@@ -61,7 +43,7 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Build Artifacts'
       inputs:
-        pathtoPublish: '$(Build.ArtifactStagingDirectory)\published.zip'
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: Container
 
@@ -97,9 +79,7 @@ stages:
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
         WebAppName: 'webapp-apitest-cc-fusionapi-001'
-        packageForLinux: '$(Pipeline.Workspace)/drop/published.zip'
-        enableCustomDeployment: true
-        DeploymentType: 'zipDeploy'
+        package: '$(Pipeline.Workspace)/drop'
         #deploymentMethod: 'zipDeploy'
         
     
