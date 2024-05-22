@@ -29,10 +29,11 @@ stages:
     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
       displayName: 'Publish Application'
     
-    - script: |
-        mkdir $(Build.ArtifactStagingDirectory)/zip
-        cd $(Build.ArtifactStagingDirectory)
-        zip -r zip/published.zip
+    - powershell:  |
+        $publishDirectory = '(Build.ArtifactStagingDirectory)'
+        $ziFilePath = '(Build.ArtifactStagingDirectory)\published.zip'
+        Add-Type -AssemblyName System.IO.Compression.FileSystem 
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($publishDirectory, $zipFilePath)
       displayName: 'Create Zip from Published Output'  
 
     # - task: DotNetCoreCLI@2
@@ -46,7 +47,7 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Build Artifacts'
       inputs:
-        pathtoPublish: '$(Build.ArtifactStagingDirectory)/zip/published.zip'
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)\published.zip'
         ArtifactName: 'drop'
         publishLocation: Container
 
