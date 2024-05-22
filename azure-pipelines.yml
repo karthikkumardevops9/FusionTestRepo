@@ -8,7 +8,7 @@ pool:
 
 stages:
 - stage: Build
-  displayName: 'Build and Test'
+  displayName: 'Build, Test and Publish Artifact'
   jobs:
   - job: CI
     displayName: 'Continuous Integration'
@@ -28,25 +28,41 @@ stages:
     - script: dotnet test
       displayName: 'Run tests'
 
-- stage: Deploy
-  displayName: 'Deploy to Azure Web App'
-  jobs:
-  - job: CD
-    displayName: 'Continuous Deployment'
-    steps:
-    - task: UseDotNet@2
-      displayName: 'Install .NET Core sdk'
-      inputs:
-        packageType: 'sdk'
-        version: '8.x'  
-
     - task: DotNetCoreCLI@2
-      displayName: 'Publish to Azure Web App'
+      displayName: 'Publish Artifact'
       inputs:
         command: 'publish'
         publishWebProjects: true
         arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
         zipAfterPublish: true
+        modifyOutputPath: true
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: Container
+
+- stage: Deploy
+  displayName: 'Deploy to Azure Web App'
+  dependsOn: Build
+  jobs:
+  - job: CD
+    displayName: 'Continuous Deployment'
+    steps:
+    # - task: UseDotNet@2
+    #   displayName: 'Install .NET Core sdk'
+    #   inputs:
+    #     packageType: 'sdk'
+    #     version: '8.x'  
+
+    # - task: DotNetCoreCLI@2
+    #   displayName: 'Publish to Azure Web App'
+    #   inputs:
+    #     command: 'publish'
+    #     publishWebProjects: true
+    #     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+    #     zipAfterPublish: true
 
     - task: AzureRmWebAppDeployment@4
       displayName: 'Azure Web App Deploy'
@@ -55,12 +71,12 @@ stages:
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
         WebAppName: 'webapp-apitest-cc-fusionapi-001'
-        packageForLinux: '$(Build.ArtifactStagingDirectory)/*/.zip'
+        packageForLinux: '$(Pipeline.Workspace)/drop/**/*.zip'
         enableCustomDeployment: true
         DeploymentType: 'zipDeploy'
         #deploymentMethod: 'zipDeploy'
         
-    - task: PublishBuildArtifacts@1    
+    
 
 
 
