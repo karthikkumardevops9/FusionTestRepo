@@ -28,6 +28,12 @@ stages:
    
     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
       displayName: 'Publish Application'
+    
+    - script: |
+        mkdir $(Build.ArtifactStagingDirectory)/zip
+        cd $(Build.ArtifactStagingDirectory)
+        zip -r zip/published.zip
+      displayName: 'Create Zip from Published Output'  
 
     # - task: DotNetCoreCLI@2
     #   displayName: 'Publish Artifact'
@@ -40,7 +46,7 @@ stages:
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Build Artifacts'
       inputs:
-        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)/zip/published.zip'
         ArtifactName: 'drop'
         publishLocation: Container
 
@@ -76,7 +82,7 @@ stages:
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
         WebAppName: 'webapp-apitest-cc-fusionapi-001'
-        packageForLinux: '$(Pipeline.Workspace)/drop/*'
+        packageForLinux: '$(Pipeline.Workspace)/drop/published.zip'
         enableCustomDeployment: true
         DeploymentType: 'zipDeploy'
         #deploymentMethod: 'zipDeploy'
