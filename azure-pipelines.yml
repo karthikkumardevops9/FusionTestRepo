@@ -8,13 +8,13 @@ pool:
 
 stages:
 - stage: Build
-  displayName: 'Build, Test and Publish Artifact'
+  displayName: 'Build, Test, and Publish Artifact'
   jobs:
   - job: CI
     displayName: 'Continuous Integration'
     steps:
     - task: UseDotNet@2
-      displayName: 'Install .NET Core sdk'
+      displayName: 'Install .NET Core SDK'
       inputs:
         packageType: 'sdk'
         version: '8.x'  
@@ -25,21 +25,9 @@ stages:
     - script: dotnet build --configuration Release
       displayName: 'Build application'
 
-   
     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
       displayName: 'Publish Application'
     
-   
-     
-
-    # - task: DotNetCoreCLI@2
-    #   displayName: 'Publish Artifact'
-    #   inputs:
-    #     command: 'publish'
-    #     publishWebProjects: true
-    #     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
-    #     zipAfterPublish: true
-    #     modifyOutputPath: true
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Build Artifacts'
       inputs:
@@ -47,40 +35,151 @@ stages:
         ArtifactName: 'drop'
         publishLocation: Container
 
-- stage: Deploy
-  displayName: 'Deploy to Azure Web App'
+- stage: DeployQA
+  displayName: 'Deploy to QA'
   dependsOn: Build
   jobs:
-  - job: CD
-    displayName: 'Continuous Deployment'
+  - job: CDQA
+    displayName: 'Continuous Deployment to QA'
     steps:
     - download: current
       artifact: drop
       displayName: 'Download Build Artifacts'
 
     - task: UseDotNet@2
-      displayName: 'Install .NET Core sdk'
+      displayName: 'Install .NET Core SDK'
       inputs:
         packageType: 'sdk'
         version: '8.x'  
 
-    # - task: DotNetCoreCLI@2
-    #   displayName: 'Publish to Azure Web App'
-    #   inputs:
-    #     command: 'publish'
-    #     publishWebProjects: true
-    #     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
-    #     zipAfterPublish: true
-
     - task: AzureRmWebAppDeployment@4
-      displayName: 'Azure Web App Deploy'
+      displayName: 'Azure Web App Deploy to QA'
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
-        WebAppName: 'webapp-apitest-cc-fusionapi-001'
+        WebAppName: 'webapp-apiqa-cc-fusionapi-001'
         package: '$(Pipeline.Workspace)/drop'
-        #deploymentMethod: 'zipDeploy'
+
+- stage: DeployUAT
+  displayName: 'Deploy to UAT'
+  dependsOn: DeployQA
+  jobs:  
+  - deployment: 'DeploytoUAT'
+    displayName: 'DeployUAT'
+    environment: 'UAT'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: drop
+              displayName: 'Download Build Artifacts'           
+    
+     
+
+            - task: UseDotNet@2
+              displayName: 'Install .NET Core SDK'
+              inputs:
+                packageType: 'sdk'
+                version: '8.x'  
+
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Azure Web App Deploy to UAT'
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'Azure_DevOps_Service_Connection'
+                appType: 'webApp'
+                WebAppName: 'webapp-apiuat-cc-fusionapi-001'
+                package: '$(Pipeline.Workspace)/drop'
+
+    
+
+
+
+# trigger:
+#   branches:
+#     include:     
+#       - main  
+
+# pool:
+#   name: Default
+
+# stages:
+# - stage: Build
+#   displayName: 'Build, Test and Publish Artifact'
+#   jobs:
+#   - job: CI
+#     displayName: 'Continuous Integration'
+#     steps:
+#     - task: UseDotNet@2
+#       displayName: 'Install .NET Core sdk'
+#       inputs:
+#         packageType: 'sdk'
+#         version: '8.x'  
+
+#     - script: dotnet restore
+#       displayName: 'Restore dependencies'
+
+#     - script: dotnet build --configuration Release
+#       displayName: 'Build application'
+
+   
+#     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
+#       displayName: 'Publish Application'
+    
+   
+     
+
+#     # - task: DotNetCoreCLI@2
+#     #   displayName: 'Publish Artifact'
+#     #   inputs:
+#     #     command: 'publish'
+#     #     publishWebProjects: true
+#     #     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+#     #     zipAfterPublish: true
+#     #     modifyOutputPath: true
+#     - task: PublishBuildArtifacts@1
+#       displayName: 'Publish Build Artifacts'
+#       inputs:
+#         pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#         ArtifactName: 'drop'
+#         publishLocation: Container
+
+# - stage: Deploy
+#   displayName: 'Deploy to Azure Web App'
+#   dependsOn: Build
+#   jobs:
+#   - job: CD
+#     displayName: 'Continuous Deployment'
+#     steps:
+#     - download: current
+#       artifact: drop
+#       displayName: 'Download Build Artifacts'
+
+#     - task: UseDotNet@2
+#       displayName: 'Install .NET Core sdk'
+#       inputs:
+#         packageType: 'sdk'
+#         version: '8.x'  
+
+#     # - task: DotNetCoreCLI@2
+#     #   displayName: 'Publish to Azure Web App'
+#     #   inputs:
+#     #     command: 'publish'
+#     #     publishWebProjects: true
+#     #     arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+#     #     zipAfterPublish: true
+
+#     - task: AzureRmWebAppDeployment@4
+#       displayName: 'Azure Web App Deploy'
+#       inputs:
+#         ConnectionType: 'AzureRM'
+#         azureSubscription: 'Azure_DevOps_Service_Connection'
+#         appType: 'webApp'
+#         WebAppName: 'webapp-apitest-cc-fusionapi-001'
+#         package: '$(Pipeline.Workspace)/drop'
+#         #deploymentMethod: 'zipDeploy'
         
     
 
@@ -108,37 +207,3 @@ stages:
 
 
 
-# # ASP.NET Core (.NET Framework)
-# # Build and test ASP.NET Core projects targeting the full .NET Framework.
-# # Add steps that publish symbols, save build artifacts, and more:
-# # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
-# trigger:
-# - master
-
-# pool:
-#   vmImage: 'windows-latest'
-
-# variables:
-#   solution: '**/*.sln'
-#   buildPlatform: 'Any CPU'
-#   buildConfiguration: 'Release'
-
-# steps:
-# - task: NuGetToolInstaller@1
-
-# - task: NuGetCommand@2
-#   inputs:
-#     restoreSolution: '$(solution)'
-
-# - task: VSBuild@1
-#   inputs:
-#     solution: '$(solution)'
-#     msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-#     platform: '$(buildPlatform)'
-#     configuration: '$(buildConfiguration)'
-
-# - task: VSTest@2
-#   inputs:
-#     platform: '$(buildPlatform)'
-#     configuration: '$(buildConfiguration)'
