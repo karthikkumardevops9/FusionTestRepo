@@ -91,7 +91,7 @@ stages:
                 azureSubscription: 'Azure_DevOps_Service_Connection'
                 appType: 'webApp'
                 WebAppName: 'webapp-apiuat-cc-fusionapi-001'
-                package: '$(Pipeline.Workspace)/drop'
+                package: '$(Pipeline.Workspace)/drop/1'
 
     
 
