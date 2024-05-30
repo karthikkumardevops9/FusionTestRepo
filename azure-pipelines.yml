@@ -177,7 +177,7 @@ stages:
         ConnectionType: 'AzureRM'
         azureSubscription: 'Azure_DevOps_Service_Connection'
         appType: 'webApp'
-        WebAppName: 'webapp-apiqa-cc-fusionapi-001'
+        WebAppName: 'webapp-apitest-cc-fusionapi-001'
         package: '$(Pipeline.Workspace)/drop'
         #deploymentMethod: 'zipDeploy'
         
