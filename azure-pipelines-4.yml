@@ -39,7 +39,7 @@ stages:
         publishLocation: Container
 
 - stage: DeployDEV
-  displayName: 'Deploy to DEV Azure Web App'
+  displayName: 'Deploy to DEV'
   dependsOn: Build
   jobs:
   - job: CD
