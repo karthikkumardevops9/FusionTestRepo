@@ -1,0 +1,113 @@
+trigger:
+  branches:
+    include:     
+      - 
+
+pool:
+  name: Default
+
+stages:
+- stage: Build
+  displayName: 'Build, Test, and Publish Artifact'
+  jobs:
+  - job: CI
+    displayName: 'Continuous Integration'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'  
+
+    - script: dotnet restore
+      displayName: 'Restore dependencies'
+
+    - script: dotnet build --configuration Release
+      displayName: 'Build application'
+
+    - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Publish Application'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: Container
+
+- stage: DeployUAT
+  displayName: 'Deploy to UAT'
+  dependsOn: Build
+  jobs:  
+  - deployment: 'DeploytoUAT'
+    displayName: 'DeployUAT'
+    environment: 'UAT'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: drop
+              displayName: 'Download Build Artifacts'           
+    
+     
+
+            - task: UseDotNet@2
+              displayName: 'Install .NET Core SDK'
+              inputs:
+                packageType: 'sdk'
+                version: '8.x'  
+
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Azure Web App Deploy to UAT'
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'Azure_DevOps_Service_Connection'
+                appType: 'webApp'
+                WebAppName: 'webapp-apiuat-cc-fusionapi-001'
+                package: '$(Pipeline.Workspace)/drop/'
+
+- stage: DeployPROD
+  displayName: 'Deploy to PROD'
+  dependsOn: DeployUAT
+  jobs:  
+  - deployment: 'DeploytoPROD'
+    displayName: 'DeployPROD'
+    environment: 'PROD'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - download: current
+              artifact: drop
+              displayName: 'Download Build Artifacts'           
+    
+     
+
+            - task: UseDotNet@2
+              displayName: 'Install .NET Core SDK'
+              inputs:
+                packageType: 'sdk'
+                version: '8.x'  
+
+            - task: AzureRmWebAppDeployment@4
+              displayName: 'Azure Web App Deploy to PROD'
+              inputs:
+                ConnectionType: 'AzureRM'
+                azureSubscription: 'Azure_DevOps_Service_Connection'
+                appType: 'webApp'
+                WebAppName: 'webapp-apiprod-cc-fusionapi-001'
+                package: '$(Pipeline.Workspace)/drop/'
+
+    
+
+
+
+
+
+
+
+
+
+
+
