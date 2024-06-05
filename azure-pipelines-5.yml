@@ -1,0 +1,128 @@
+trigger:
+  branches:
+    include:     
+      - main 
+
+pool:
+  name: Default
+
+stages:
+- stage: Build
+  displayName: 'Build, Test, and Publish Artifact'
+  jobs:
+  - job: CI
+    displayName: 'Continuous Integration'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'  
+
+    - script: dotnet restore
+      displayName: 'Restore dependencies'
+
+    - script: dotnet build --configuration Release
+      displayName: 'Build application'
+
+    - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Publish Application'
+
+    
+    - script: dotnet pack --configuration Release --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Pack application'
+
+   
+    - task: NuGetCommand@2
+      displayName: 'Add NuGet feed'
+      inputs:
+        command: 'sources'
+        arguments: 'add -name "tabpipelines" -source "https://pkgs.dev.azure.com/tabpipelines/_packaging/tabpipelines/nuget/v3/index.json" -username "AzureArtifacts" -password $(System.AccessToken) -storepasswordincleartext'
+
+   
+    - task: NuGetCommand@2
+      displayName: 'Push to Azure Artifacts'
+      inputs:
+        command: 'push'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+        nuGetFeedType: 'external'
+        publishFeed: 'tabpipelines' # This should match the feed name used in the sources add command
+        allowPackageConflicts: true
+
+- stage: Deploy
+  displayName: 'Deploy to Azure Web App'
+  dependsOn: Build
+  jobs:
+  - job: CD
+    displayName: 'Continuous Deployment'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'  
+
+    
+    - script: |
+        nuget restore
+      displayName: 'Restore package from Azure Artifacts'
+
+    - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Publish Application'
+
+   
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Azure Web App Deploy'
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure_DevOps_Service_Connection'
+        appType: 'webApp'
+        WebAppName: 'webapp-apitest-cc-fusionapi-001'
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip' 
+
+- stage: DeployQA
+  displayName: 'Deploy to QA'
+  dependsOn: Build
+  jobs:
+  - job: CDQA
+    displayName: 'Continuous Deployment to QA'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.x'  
+
+    
+    - script: |
+        nuget restore
+      displayName: 'Restore package from Azure Artifacts'
+
+    - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Publish Application'
+
+   
+    - task: ArchiveFiles@2
+      inputs:
+        rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+        includeRootFolder: false
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        replaceExistingArchive: true
+
+    - task: AzureRmWebAppDeployment@4
+      displayName: 'Azure Web App Deploy to QA'
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: 'Azure_DevOps_Service_Connection'
+        appType: 'webApp'
+        WebAppName: 'webapp-apiqa-cc-fusionapi-001'
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
