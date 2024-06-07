@@ -66,7 +66,8 @@ stages:
         zipAfterPublish: true
 
     - task: AzureRmWebAppDeployment@4
-      displayName: 'Azure Web App Deploy'
+      #displayName: 'Azure Web App Deploy'
+      displayName: 'Publish Artifact'
       inputs:
         ConnectionType: 'AzureRM'
         azureSubscription: 'Azure_DevOps_Service_Connection'
