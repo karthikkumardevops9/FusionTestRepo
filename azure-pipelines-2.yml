@@ -56,7 +56,8 @@ stages:
         version: '8.x'  
 
     - task: DotNetCoreCLI@2
-      displayName: 'Publish to Azure Web App'
+      displayName: 'Publish Artifact'
+      #displayName: 'Publish to Azure Web App'
       inputs:
         command: 'publish'
         publishWebProjects: true
