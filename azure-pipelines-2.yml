@@ -39,7 +39,8 @@ stages:
         publishLocation: Container
 
 - stage: Deploy
-  displayName: 'Deploy to Azure Web App'
+  displayName: 'Publish Artifact'
+  #displayName: 'Deploy to Azure Web App'
   dependsOn: Build
   jobs:
   - job: CD
