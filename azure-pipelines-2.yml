@@ -94,7 +94,8 @@ stages:
           version: '8.x'  
 
       - task: AzureRmWebAppDeployment@4
-        displayName: 'Azure Web App Deploy to QA'
+        #displayName: 'Azure Web App Deploy to QA'
+        displayName: 'Publish Artifact'
         inputs:
           ConnectionType: 'AzureRM'
           azureSubscription: 'Azure_DevOps_Service_Connection'
