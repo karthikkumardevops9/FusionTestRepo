@@ -22,17 +22,18 @@ stages:
     - task: NuGetAuthenticate@0
       displayName: 'NuGet Authenticate'
 
-    - script: dotnet restore --source https://pkgs.dev.azure.com/keerthana5y/Demo/_packaging/test/nuget/v3/index.json
-      displayName: 'Restore dependencies'
-      continueOnError: false
+    - script: |
+        dotnet nuget add source https://pkgs.dev.azure.com/keerthana5y/Demo/_packaging/test/nuget/v3/index.json -n AzureArtifacts -u $(System.AccessToken) --store-password-in-clear-text
+        dotnet restore
+      displayName: 'Add NuGet Source and Restore dependencies'
+      env:
+        VSS_NUGET_EXTERNAL_FEED_ENDPOINTS: '{"endpointCredentials": [{"endpoint": "https://pkgs.dev.azure.com/keerthana5y/Demo/_packaging/test/nuget/v3/index.json", "username": "", "password": "$(System.AccessToken)"}]}'
 
     - script: dotnet build --configuration Release
       displayName: 'Build application'
-      continueOnError: false
 
     - script: dotnet publish --configuration Release --output $(Build.ArtifactStagingDirectory)
       displayName: 'Publish Application'
-      continueOnError: false
 
     - task: PublishPipelineArtifact@1
       displayName: 'Publish Artifact to Azure Artifacts'
